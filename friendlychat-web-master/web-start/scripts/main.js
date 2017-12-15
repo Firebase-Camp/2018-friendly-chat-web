@@ -17,14 +17,18 @@
 
 // Initializes FriendlyChat.
 function FriendlyChat() {
+
+  // Checks that the Firebase SDK has been correctly setup and configured.
   this.checkSetup();
 
   // Shortcuts to DOM Elements.
   this.messageList = document.getElementById('messages');
   this.messageForm = document.getElementById('message-form');
   this.messageInput = document.getElementById('message');
+
   this.submitButton = document.getElementById('submit');
   this.submitImageButton = document.getElementById('submitImage');
+
   this.imageForm = document.getElementById('image-form');
   this.mediaCapture = document.getElementById('mediaCapture');
   this.userPic = document.getElementById('user-pic');
@@ -35,10 +39,12 @@ function FriendlyChat() {
 
   // Saves message on form submit.
   this.messageForm.addEventListener('submit', this.saveMessage.bind(this));
+
+  // Handle sign-in/sign-out button clicks
   this.signOutButton.addEventListener('click', this.signOut.bind(this));
   this.signInButton.addEventListener('click', this.signIn.bind(this));
 
-  // Toggle for the button.
+  // Toggle for the "submit" button.
   var buttonTogglingHandler = this.toggleButton.bind(this);
   this.messageInput.addEventListener('keyup', buttonTogglingHandler);
   this.messageInput.addEventListener('change', buttonTogglingHandler);
@@ -53,12 +59,14 @@ function FriendlyChat() {
   this.initFirebase();
 }
 
-// Sets up shortcuts to Firebase features and initiate firebase auth.
+// Sets up shortcuts to Firebase features
+// and initiate firebase auth.
 FriendlyChat.prototype.initFirebase = function() {
   // TODO(DEVELOPER): Initialize Firebase.
 };
 
-// Loads chat messages history and listens for upcoming ones.
+// Loads chat messages history
+// and listens for upcoming ones.
 FriendlyChat.prototype.loadMessages = function() {
   // TODO(DEVELOPER): Load and listens for new messages.
 };
@@ -74,11 +82,13 @@ FriendlyChat.prototype.saveMessage = function(e) {
   }
 };
 
-// Sets the URL of the given img element with the URL of the image stored in Cloud Storage.
+// Sets the URL of the given img element with the URL
+// of the image stored in Cloud Storage.
 FriendlyChat.prototype.setImageUrl = function(imageUri, imgElement) {
   imgElement.src = imageUri;
 
-  // TODO(DEVELOPER): If image is on Cloud Storage, fetch image URL and set img element's src.
+  // TODO(DEVELOPER): If image is on Cloud Storage,
+  // fetch image URL and set img element's src.
 };
 
 // Saves a new message containing an image URI in Firebase.
@@ -112,10 +122,12 @@ FriendlyChat.prototype.signIn = function() {
   // TODO(DEVELOPER): Sign in Firebase with credential from the Google user.
 };
 
+
 // Signs-out of Friendly Chat.
 FriendlyChat.prototype.signOut = function() {
   // TODO(DEVELOPER): Sign out of Firebase.
 };
+
 
 // Triggers when the auth state change for instance when the user signs-in or signs-out.
 FriendlyChat.prototype.onAuthStateChanged = function(user) {
@@ -246,6 +258,8 @@ FriendlyChat.prototype.checkSetup = function() {
   }
 };
 
+
+// S1: On load, instantiate FriendlyChat object to manage UI
 window.onload = function() {
   window.friendlyChat = new FriendlyChat();
 };
