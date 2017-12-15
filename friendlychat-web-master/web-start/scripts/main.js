@@ -15,10 +15,13 @@
  */
 'use strict';
 
-// Initializes FriendlyChat.
+// S2: Initializes FriendlyChat.
+//  - checks that Firebase SDK is correctly setup & configured
+//  - creates shortcut variables for all DOM elements
+//  - attaches event listeners (and callbacks) to key events
+//    e.g., sign in, sign out,
 function FriendlyChat() {
 
-  // Checks that the Firebase SDK has been correctly setup and configured.
   this.checkSetup();
 
   // Shortcuts to DOM Elements.
@@ -62,7 +65,14 @@ function FriendlyChat() {
 // Sets up shortcuts to Firebase features
 // and initiate firebase auth.
 FriendlyChat.prototype.initFirebase = function() {
-  // TODO(DEVELOPER): Initialize Firebase.
+
+  // Shortcuts to Firebase SDK features.
+  this.auth = firebase.auth();
+  this.database = firebase.database();
+  this.storage = firebase.storage();
+
+  // Initiates Firebase auth and listen to auth state changes.
+  this.auth.onAuthStateChanged(this.onAuthStateChanged.bind(this));
 };
 
 // Loads chat messages history
@@ -119,13 +129,16 @@ FriendlyChat.prototype.saveImageMessage = function(event) {
 
 // Signs-in Friendly Chat.
 FriendlyChat.prototype.signIn = function() {
-  // TODO(DEVELOPER): Sign in Firebase with credential from the Google user.
+  // Sign in Firebase using popup auth and Google as the identity provider.
+  var provider = new firebase.auth.GoogleAuthProvider();
+  this.auth.signInWithPopup(provider);
 };
 
 
 // Signs-out of Friendly Chat.
 FriendlyChat.prototype.signOut = function() {
-  // TODO(DEVELOPER): Sign out of Firebase.
+  // Sign out of Firebase.
+  this.auth.signOut();
 };
 
 
@@ -166,7 +179,11 @@ FriendlyChat.prototype.onAuthStateChanged = function(user) {
 
 // Returns true if user is signed-in. Otherwise false and displays a message.
 FriendlyChat.prototype.checkSignedInWithMessage = function() {
-  /* TODO(DEVELOPER): Check if user is signed-in Firebase. */
+
+  // Return true if the user is signed in Firebase
+  if (this.auth.currentUser) {
+    return true;
+  }
 
   // Display a message to the user using a Toast.
   var data = {

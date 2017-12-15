@@ -196,6 +196,89 @@ _At this point you should see the basic web app UI show up on localhost:5000_
 
 ### 5. Handle User Sign-In
 
+Now it's time to start modifying the code.
+
+The structure of the user interface is defined in ```index.html``` and uses simple mdl [Material Design Lite](https://getmdl.io) components to scaffold a simple page that has a top-level layout-header, a central messages-card-container and a  bottom-level snackbar for alerts.
+
+The styling for this simple page is in the ```styles/main.css``` file and is pretty basic. 
+
+All the control code for this codelab can be found in a single file ```scripts/main.js```. There were no front-end frameworks used here, so all the code is simply vanilla JS. Here is what the basic code outline is:
+
+ 1. On window load, instantiate a FriendlyChat object to manage user interactions.
+
+ 2. The FriendlyChat prototype defines the following functions to help manage the user interactions
+    * checkSetup = checks that the Firebase SDK is configured correctly
+    * initFirebase = configure the relevant Firebase services used by app
+    * signIn = handle sign-in button click
+    * signOut = handle sign-out button click
+    * onAuthStateChanged = handle auth-change events when user signs in/out
+    * checkSignedInWithMessage = checks user is signed in before posting
+    * saveMessage = handle submit buttom click (when user fills message form)
+    * toggleButton = enables/disables submit button (on validating input)
+    * loadMessages = loads chat messages history, listens for new additions
+    * displayMessage = fills template & adds message to container for display
+    * saveMessage = saves new message to Firebase backend (RT DB)
+    * saveMessagingDeviceToken = saves messaging device token to datastore
+    * requestNotificationsPermissions = ask permission to show notifications
+
+ 3. In its constructor, it verifies that the Firebase SDK is setup correctly and configured. It then creates shortcut variables for the DOM elements, adds event listeners (with callbacks) to relevant elements, then calls _initFirebase()_ to configure Firebase services that this app is using.
+
+**First: initFirebase()**
+
+Creates shortcuts to features used (auth, database, storage), and registers the callback that should be triggered when the Firebase Auth service determines that the auth state has changed.
+
+```
+FriendlyChat.prototype.initFirebase = function() {
+  // Shortcuts to Firebase SDK features.
+  this.auth = firebase.auth();
+  this.database = firebase.database();
+  this.storage = firebase.storage();
+  // Initiates Firebase auth and listen to auth state changes.
+  this.auth.onAuthStateChanged(this.onAuthStateChanged.bind(this));
+};
+```
+
+
+**Next: signIn()**
+
+Next implement the callback for the sign-in button handler. For now, this simply uses the easy "signInWithPopup" option that exists for the GoogleAuthProvider as a 1-line-code helper. 
+
+There are [other provider options](https://firebase.google.com/docs/auth/web/start) for Facebook, GitHub, Twitter providers, or for using email/password or phone number (Digits) as auth options.
+
+There are also [other UI options](https://firebase.google.com/docs/auth/web/google-signin) for use with Google Sign-on including redirecting to a separate page. The "provider" object can optionally be extended to specify OAuth scopes or custom parameters for use with the login.
+
+```
+FriendlyChat.prototype.signIn = function() {
+  // Sign in Firebase using popup auth and Google as the identity provider.
+  var provider = new firebase.auth.GoogleAuthProvider();
+  this.auth.signInWithPopup(provider);
+};
+```
+
+Sign out is easy. 
+
+```
+FriendlyChat.prototype.signOut = function() {
+  // Sign out of Firebase.
+  this.auth.signOut();
+};
+```
+
+Note that both signout and signin, will in turn trigger Auth Change events - handle these in the onAuthStateChange callback that pre-existed.(Also note that it is within this callback that the signin/signout buttons are contextually shown/hidden based on auth state. So once you initialize this far, the sign-in button should appear by default)
+
+When authenticated, the "this.auth.currentUser" property will exist (be true), so we can use this to trigger the Snack bar to remind users to sign in if they try to post something without doing so.
+
+```
+FriendlyChat.prototype.checkSignedInWithMessage = function() {
+  // Return true if the user is signed in Firebase
+  if (this.auth.currentUser) {
+    return true;
+  }
+
+  ...
+```
+
+At ths point you should have a login button. And logging in should cause the onAuthChanged callback to automatically show the additional elements (user name and profile pic) associated with the login.
 
 ### 6. Read Messages (as data, from Real-Time Database)
 
