@@ -7,7 +7,279 @@ The steps here correspond to the steps fo the codelab -- however, you may also s
 
 <hr />
 
-## FIREBASE AS A BACKEND (Core Features)
+## FIREBASE PRODUCTS (Walkthrough)
+
+### [1. Initialization](https://firebase.google.com/docs/web/setup)
+
+To use Firebase in Web apps, you need to do the following:
+
+ * Install the Firebase SDK (import appropriate dist in script)
+ * Set Firebase project config (copy from project in Console)
+ * Call ```firebase.initializeApp(config)``` in your code
+ * Access firebase product APIs using relevant ```firebase.x``` 
+     - firebase.auth()
+     - firebase.storage()
+     - firebase.database()
+     - firebase.firestore()
+
+To reduce codebloat, instead of full Firebase SDK, you can import the 
+firebase-app (core) and then add only those (optional) pieces you use:
+
+ * firebase-app - The core firebase client (required).
+ * firebase-auth - Firebase Authentication (optional).
+ * firebase-database - The Firebase Realtime Database (optional).
+ * firebase-firestore - Cloud Firestore (optional).
+ * firebase-storage - Cloud Storage (optional).
+ * firebase-messaging - Firebase Cloud Messaging (optional).
+
+You can initialize multiple apps within same codebase by simply having different config variables for each, then initializing them with those separately. (Allows one web app to link to multiple Firebase projects).
+
+```
+// Initialize the default app
+firebase.initializeApp(defaultAppConfig);
+
+// Initialize another app with a different config
+var otherApp = firebase.initializeApp(otherAppConfig, "other");
+
+console.log(firebase.app().name);  // "[DEFAULT]"
+console.log(otherApp.name);        // "other"
+
+// Use the shorthand notation to retrieve the default app's services
+var defaultStorage = firebase.storage();
+var defaultDatabase = firebase.database();
+
+// Use the otherApp variable to retrieve the other app's services
+var otherStorage = otherApp.storage();
+var otherDatabase = otherApp.database();
+```
+
+
+### 
+
+### [2. Authentication](https://firebase.google.com/docs/auth/web/start)
+
+Allow sign-in with one or more sign-in methods including:
+ * Email/Password 
+     - You own the user credentials
+     - Admin provides easy verification, reset services
+ * Identity Service Providers
+     - Google
+     - Facebook
+     - Twitter
+     - GitHub
+ * Anonymous
+
+First, go to console and ENABLE the authentication methods 
+you want to support. If you are hosting your app at a custom domain, you will also need to add that to the list of "authorized domains" for OAuth. The hosted app domain is added for you automatically.
+
+Sign UP new users:
+
+```
+firebase.auth()
+    .createUserWithEmailAndPassword(email, password)
+    .catch(function(error) {
+      // Handle Errors here.
+      var errorCode = error.code;
+      var errorMessage = error.message;
+      // ...
+    });
+```
+
+Sign IN current users:
+
+```
+firebase.auth()
+    .signInWithEmailAndPassword(email, password)
+    .catch(function(error) {
+      // Handle Errors here.
+      var errorCode = error.code;
+      var errorMessage = error.message;
+      // ...
+    });
+```
+
+Sign OUT current users:
+
+```
+firebase.auth().signOut();
+```
+
+Register for auth-change events so you can update your application in real-time to reflect auth status of user:
+
+```
+firebase.auth().onAuthStateChanged(function(user) {
+  if (user) {
+    // User is signed in.
+    var displayName = user.displayName;
+    var email = user.email;
+    var emailVerified = user.emailVerified;
+    var photoURL = user.photoURL;
+    var isAnonymous = user.isAnonymous;
+    var uid = user.uid;
+    var providerData = user.providerData;
+    // ...
+  } else {
+    // User is signed out.
+    // ...
+  }
+});
+```
+
+You can sign in the user ANONYMOUSLY to create a trackable user object whose actions can subsequently be converted into a new account (sign up) or transferred to an existing account (sign in)
+
+```
+firebase.auth()
+    .signInAnonymously()
+    .catch(function(error) {
+      // Handle Errors here.
+      var errorCode = error.code;
+      var errorMessage = error.message;
+      // ...
+    });
+```
+
+If successful, this also triggers the ```onAuthStateChanged``` callback with a "signed in" event but now you can check within that callback to see if the sign is from an anonymous user, or from an identity provider.
+
+```
+firebase.auth().onAuthStateChanged(function(user) {
+  if (user) {
+    // User is signed in & is anonymous
+    var isAnonymous = user.isAnonymous;
+    var uid = user.uid;
+    // ...
+  } else {
+    // User is signed out.
+    // ...
+  }
+
+  //...
+
+});
+```
+
+If the anonymous user later logs in via a provider (you or other), you can "limnk" that identified user to the anonymous user, allowing the former account to access Firebase data/traces created by the latter. See [this page](https://firebase.google.com/docs/auth/web/anonymous-auth) for more information
+
+```
+auth.currentUser.link(credential).then(function(user) {
+  console.log("Anonymous account successfully upgraded", user);
+}, function(error) {
+  console.log("Error upgrading anonymous account", error);
+});
+```
+
+You can also have a [custom auth system](https://firebase.google.com/docs/auth/web/custom-auth), sign in with a [phone number](https://firebase.google.com/docs/auth/web/phone-auth) (especially with Digits integration) and leverage the open-source [FirebaseUI](https://opensource.google.com/projects/firebaseui) components to get pre-made user interaction flows and UI.
+
+Actions like 'Verify Email' or 'Reset Password' can be triggered directly from the Admin Console. But you can also trigger admin actions using the [Admin SDK](https://firebase.google.com/docs/reference/admin/)
+
+For email-driven actions, you can pass state information (e.g., what application link the user should go to) using ```ActionCodeSettings```. However the domains for links used _must_ be whitelisted in the Authentication tab of the Admin Console. Learn more [here](https://firebase.google.com/docs/auth/web/passing-state-in-email-actions).
+
+
+### [3. Real-Time Database](https://firebase.google.com/docs/database/)
+
+
+
+### [4. Hosting](https://firebase.google.com/docs/hosting/)
+
+
+### [5. Security](https://firebase.google.com/docs/database/security/)
+
+Realtime Database rules determine 
+
+ * who has read/write access to your data
+ * what indexes exist
+ * how data is structured
+
+Rules live on the Firebase server, but can be maintained in a local file in your development environment and "deployed" using Firebase CLI. Every read/write will proceed only if the rules enforced at the relevant node (reference) allow it.
+
+Rules have a JavaScript-like syntax and are of 4 types:
+
+ * read - can this user read this data node
+ * write - can this user write to this data node
+ * validate - does this data have valid format (data type, children)
+ * indexOn - what is the index used for child order/query
+
+**Rules cascade!** 
+ 
+ * A rule established at parent is immediately enforced at children
+ * Shallow overrides deep - so a child's rule is overridden by parent!
+
+So make sure that your shallowest rules are strong and don't weaken the child-set rules accidentally.
+
+Example:
+For data at the path "/foo" in my database, anyone can read it and no one can write to (update) it. Also, by cascade, any one at /foo/bar/1 and /foo/baz/1 will have the same read/write restrictions _even if_ they specified a new rule at that level that allowed writes.
+```
+{
+  "rules": {
+    "foo": {
+      ".read": true,
+      ".write": false
+    }
+  }
+}
+```
+
+Firebase has [built-in variables and functions](https://firebase.google.com/docs/database/security/securing-data#predefined_variables) you can use as wildcards to create more contextually relevant access. In addition to these "$"
+variables (wildcards for ids or child keys) you can also use "data" (before), "newData" (after), now (current time in ms), auth (token) and root (root reference before) as contexts
+
+Example:
+This rule indicates that write access at the path "/users/<uid>"  is allowed only if this 'wildcard' $uid matches that of the currently-logged in user.
+```
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".write": "$uid === auth.uid"
+      }
+    }
+  }
+}
+```
+
+
+Rules can be used to enforce data validation but validation rules do NOT cascade. So ALL relevant validations must be true before the write can proceed.
+Example:
+This validates that new data written to "/foo" can only be of type string and mus have a length less than 100 characters.
+```
+{
+  "rules": {
+    "foo": {
+      ".validate": "newData.isString() && newData.val().length < 100"
+    }
+  }
+}
+```
+
+
+Use rules to create indexes that can support more efficient querying of data (and ordering of results). By default, ad hoc querying is supported but indexes are recommended if your data size grows. Use the _indexOn_ rule for establishing a new index on the data at that node.
+
+Example:
+This says that the data under "/dinosaurs" has properties "height" and "length" that should be used to create default indexes for result sets.
+```
+{
+  "rules": {
+    "dinosaurs": {
+      ".indexOn": ["height", "length"]
+    }
+  }
+}
+```
+
+Also see:
+
+ 1. [Database Rules](https://firebase.google.com/docs/reference/security/database/)
+ 2. [Database Regular Expressions](https://firebase.google.com/docs/reference/security/database/regex)
+ 3. [Storage Rules](https://firebase.google.com/docs/reference/security/storage/)
+ 4. [Security & Storage](https://firebase.google.com/docs/storage/security/)
+ 5. [Firestore Rules](https://firebase.google.com/docs/firestore/reference/security/)
+ 6. [Security & FireStore](https://firebase.google.com/docs/firestore/security/overview).
+
+
+
+
+
+<hr />
+
+## FIREBASE AS A BACKEND (FriendlyChat Codelab)
 
 ### 1. Get the Sample Code
 
@@ -282,6 +554,9 @@ At ths point you should have a login button. And logging in should cause the onA
 
 ### 6. Read Messages (as data, from Real-Time Database)
 
+Open console and check the Database tab.
+
+
 ### 7. Send Messages (as data, to Real-Time Database)
 
 ### 8. Send Media (as files, written to Cloud Storage)
@@ -298,7 +573,7 @@ The starter code that we have downloaded previously has a **firebase.json** file
 <hr />
 
 
-## GOING SERVERLESS WITH FIREBASE (Cloud Functions)
+## GOING SERVERLESS WITH FIREBASE (Cloud Functions Codelab)
 
 ### 1. Get the Sample Code
 
